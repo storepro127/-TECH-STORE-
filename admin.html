@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة TECHSTORE | Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap'); body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-slate-50">
+
+<div id="login-box" class="max-w-md mx-auto mt-24 p-10 bg-white rounded-[3rem] shadow-2xl text-center">
+    <div class="bg-blue-600 w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-blue-200 shadow-xl"><i class="fa fa-shield-alt text-white text-2xl"></i></div>
+    <h2 class="text-2xl font-black mb-8">تسجيل دخول الإدارة</h2>
+    <input id="u" placeholder="اسم الأدمن" class="w-full bg-gray-50 border-none p-4 rounded-2xl mb-4 outline-none focus:ring-2 ring-blue-500">
+    <input type="password" id="p" placeholder="الرمز السري" class="w-full bg-gray-50 border-none p-4 rounded-2xl mb-6 outline-none focus:ring-2 ring-blue-500">
+    <button onclick="login()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-lg">دخول</button>
+</div>
+
+<div id="admin-ui" class="hidden">
+    <nav class="bg-slate-900 text-white p-5 sticky top-0 z-50 flex gap-4 overflow-x-auto whitespace-nowrap scrollbar-hide">
+        <button onclick="sec('products')" class="bg-blue-600 px-6 py-2 rounded-xl font-bold">إدارة المنتجات</button>
+        <button onclick="sec('add')" class="bg-gray-700 px-6 py-2 rounded-xl font-bold">إضافة منتج</button>
+        <button onclick="sec('orders')" class="bg-green-600 px-6 py-2 rounded-xl font-bold">الطلبات</button>
+        <button onclick="sec('coupons')" class="bg-purple-600 px-6 py-2 rounded-xl font-bold">الكوبونات</button>
+        <button onclick="sec('admins')" class="bg-orange-500 px-6 py-2 rounded-xl font-bold">إضافة أدمن</button>
+        <button onclick="logout()" class="bg-red-500 px-6 py-2 rounded-xl font-bold">خروج</button>
+    </nav>
+
+    <main class="container mx-auto p-6 space-y-12">
+        <section id="products-sec" class="hidden">
+            <h3 class="text-2xl font-black mb-6">المنتجات الحالية</h3>
+            <div id="pro-list" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+        </section>
+
+        <section id="add-sec" class="hidden max-w-xl mx-auto bg-white p-8 rounded-[2rem] shadow-xl">
+            <h3 class="font-black mb-6">نشر منتج جديد</h3>
+            <div class="space-y-4">
+                <input id="pn" placeholder="اسم المنتج" class="w-full border p-4 rounded-2xl bg-gray-50">
+                <input id="pp" type="number" placeholder="السعر" class="w-full border p-4 rounded-2xl bg-gray-50">
+                <input type="file" id="pi" class="w-full border p-4 rounded-2xl text-xs">
+                <button onclick="saveP()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black">حفظ</button>
+            </div>
+        </section>
+
+        <section id="orders-sec" class="hidden">
+            <h3 class="text-2xl font-black mb-6 italic">الأوردرات الواردة 📦</h3>
+            <div id="ord-list" class="space-y-4"></div>
+        </section>
+
+        <section id="coupons-sec" class="hidden max-w-md mx-auto bg-white p-8 rounded-[2rem] shadow-xl">
+            <h3 class="font-black mb-6">أكواد الخصم</h3>
+            <div class="flex gap-2 mb-8">
+                <input id="cc" placeholder="الكود" class="flex-1 border p-3 rounded-xl bg-gray-50 uppercase">
+                <input id="cp" type="number" placeholder="%" class="w-20 border p-3 rounded-xl bg-gray-50">
+                <button onclick="saveC()" class="bg-purple-600 text-white px-6 rounded-xl font-bold">إضافة</button>
+            </div>
+            <div id="coup-list" class="space-y-3"></div>
+        </section>
+
+        <section id="admins-sec" class="hidden max-w-md mx-auto bg-white p-8 rounded-[2rem] shadow-xl">
+            <h3 class="font-black mb-6">إضافة مدير جديد</h3>
+            <input id="au" placeholder="اسم المستخدم" class="w-full border p-3 rounded-xl mb-3 bg-gray-50">
+            <input id="ap" type="password" placeholder="كلمة السر" class="w-full border p-3 rounded-xl mb-4 bg-gray-50">
+            <button onclick="addAdmin()" class="w-full bg-orange-500 text-white py-4 rounded-xl font-bold">حفظ المدير</button>
+        </section>
+    </main>
+</div>
+
+<script>
+    const DB = "https://tech-store-71bce-default-rtdb.firebaseio.com/";
+    let main64 = "";
+
+    // التحقق من الجلسة عند فتح الصفحة
+    window.onload = () => { if(sessionStorage.getItem('isLogged')) { showUI(); } };
+
+    async function login() {
+        const user = document.getElementById('u').value;
+        const pass = document.getElementById('p').value;
+        const res = await fetch(DB + "admins.json");
+        const admins = await res.json();
+        
+        let valid = (user === "loay" && pass === "11211");
+        if(admins) { Object.values(admins).forEach(a => { if(a.u === user && a.p === pass) valid = true; }); }
+
+        if(valid) { sessionStorage.setItem('isLogged', 'true'); showUI(); }
+        else alert('بيانات غلط!');
+    }
+
+    function showUI() { document.getElementById('login-box').classList.add('hidden'); document.getElementById('admin-ui').classList.remove('hidden'); sec('products'); }
+    function logout() { sessionStorage.removeItem('isLogged'); location.reload(); }
+    function sec(s) { document.querySelectorAll('main > section').forEach(x => x.classList.add('hidden')); document.getElementById(s + '-sec').classList.remove('hidden'); if(s==='products') lp(); if(s==='orders') lo(); if(s==='coupons') lc(); }
+
+    document.getElementById('pi').onchange = e => { const r = new FileReader(); r.onload = () => main64 = r.result; r.readAsDataURL(e.target.files[0]); };
+
+    async function saveP() {
+        const d = { name: document.getElementById('pn').value, price: document.getElementById('pp').value, mainImg: main64 };
+        await fetch(DB + "products.json", { method: 'POST', body: JSON.stringify(d) });
+        alert('تم الحفظ!'); lp();
+    }
+
+    async function lp() {
+        const res = await fetch(DB + "products.json"); const data = await res.json();
+        document.getElementById('pro-list').innerHTML = data ? Object.keys(data).map(k => `
+            <div class="bg-white p-4 rounded-2xl border text-center shadow-sm">
+                <img src="${data[k].mainImg}" class="h-28 w-full object-contain mb-2">
+                <b class="text-xs block h-8 overflow-hidden">${data[k].name}</b>
+                <button onclick="del('products/${k}')" class="text-red-500 text-xs font-bold mt-2">حذف</button>
+            </div>`).join('') : "";
+    }
+
+    async function lo() {
+        const res = await fetch(DB + "orders.json"); const data = await res.json();
+        document.getElementById('ord-list').innerHTML = data ? Object.keys(data).reverse().map(k => `
+            <div class="bg-white p-6 rounded-2xl border-r-8 border-blue-600 shadow-md">
+                <div class="flex justify-between mb-4"><b>${data[k].customer}</b> <span class="text-xs text-gray-400">${data[k].date}</span></div>
+                <p class="text-xs"><b>العنوان:</b> ${data[k].address}</p>
+                <p class="text-blue-600 font-bold mt-2"><b>المنتجات:</b> ${data[k].items.map(i => i.name).join(' + ')}</p>
+                <div class="flex justify-between items-center border-t mt-4 pt-4">
+                    <b class="text-xl">${data[k].total} ج.م</b>
+                    <button onclick="del('orders/${k}')" class="text-red-500 text-sm font-bold">حذف الأوردر</button>
+                </div>
+            </div>`).join('') : "";
+    }
+
+    async function lc() {
+        const res = await fetch(DB + "coupons.json"); const data = await res.json();
+        document.getElementById('coup-list').innerHTML = data ? Object.keys(data).map(k => `
+            <div class="flex justify-between bg-gray-50 p-3 rounded-xl">
+                <span>${data[k].code} (${data[k].perc}%)</span>
+                <button onclick="del('coupons/${k}')" class="text-red-500">حذف</button>
+            </div>`).join('') : "";
+    }
+
+    async function saveC() {
+        const c = { code: document.getElementById('cc').value.toUpperCase(), perc: document.getElementById('cp').value };
+        await fetch(DB + "coupons.json", { method: 'POST', body: JSON.stringify(c) }); lc();
+    }
+
+    async function addAdmin() {
+        const u = document.getElementById('au').value; const p = document.getElementById('ap').value;
+        await fetch(DB + "admins.json", { method: 'POST', body: JSON.stringify({u, p}) });
+        alert('تم إضافة أدمن جديد!');
+    }
+
+    async function del(p) { if(confirm('متأكد؟')) { await fetch(DB + p + ".json", { method: 'DELETE' }); location.reload(); } }
+</script>
+</body>
+</html>
