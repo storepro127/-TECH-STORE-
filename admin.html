@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة TECHSTORE | Loay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap'); body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-gray-100">
+
+<div id="login-box" class="max-w-md mx-auto mt-20 p-10 bg-white rounded-[3rem] shadow-2xl text-center">
+    <h2 class="text-3xl font-black mb-8">أهلاً يا <span class="text-blue-600">لؤي</span></h2>
+    <input id="u" placeholder="اسم الأدمن" class="w-full border-none bg-gray-50 p-4 rounded-2xl mb-4 outline-none">
+    <input type="password" id="p" placeholder="الرمز السري" class="w-full border-none bg-gray-50 p-4 rounded-2xl mb-6 outline-none">
+    <button onclick="login()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl">دخول النظام</button>
+</div>
+
+<div id="ui" class="hidden">
+    <nav class="bg-slate-900 text-white p-5 sticky top-0 z-50 flex gap-4 overflow-x-auto whitespace-nowrap">
+        <button onclick="sec('products')" class="bg-blue-600 px-6 py-2 rounded-xl font-bold">إدارة المنتجات</button>
+        <button onclick="sec('add')" class="bg-gray-700 px-6 py-2 rounded-xl font-bold">إضافة منتج</button>
+        <button onclick="sec('orders')" class="bg-green-600 px-6 py-2 rounded-xl font-bold">الطلبات</button>
+        <button onclick="sec('coupons')" class="bg-purple-600 px-6 py-2 rounded-xl font-bold">الكوبونات</button>
+        <button onclick="location.href='index.html'" class="bg-red-500 px-6 py-2 rounded-xl font-bold">المتجر</button>
+    </nav>
+
+    <main class="container mx-auto p-6">
+        <section id="products-sec" class="hidden">
+            <h3 class="text-2xl font-black mb-6 italic">المنتجات المعروضة حالياً</h3>
+            <div id="pro-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        </section>
+
+        <section id="add-sec" class="hidden max-w-xl mx-auto bg-white p-8 rounded-[2rem] shadow-xl">
+            <h3 class="font-black mb-6">نشر منتج جديد</h3>
+            <div class="space-y-4">
+                <input id="p-name" placeholder="اسم المنتج" class="w-full border p-4 rounded-2xl bg-gray-50">
+                <input id="p-price" type="number" placeholder="السعر" class="w-full border p-4 rounded-2xl bg-gray-50">
+                <select id="p-cat" class="w-full border p-4 rounded-2xl bg-gray-50 font-bold">
+                    <option>موبايلات</option><option>لابتوبات</option><option>سماعات</option><option>ساعات</option>
+                </select>
+                <input type="file" id="p-main" class="w-full border p-4 rounded-2xl text-xs">
+                <button onclick="saveProduct()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black">حفظ ونشر</button>
+            </div>
+        </section>
+
+        <section id="orders-sec" class="hidden">
+            <h3 class="text-2xl font-black mb-6">أوردرات لؤي 📦</h3>
+            <div id="ord-list" class="space-y-4"></div>
+        </section>
+    </main>
+</div>
+
+<script>
+    const DB = "https://tech-store-71bce-default-rtdb.firebaseio.com/";
+    let main64 = "";
+
+    function login() {
+        if(document.getElementById('u').value === "loay" && document.getElementById('p').value === "11211") {
+            document.getElementById('login-box').hidden = true;
+            document.getElementById('ui').classList.remove('hidden');
+            sec('products');
+        } else alert('بيانات لؤي غلط!');
+    }
+
+    function sec(s) {
+        document.querySelectorAll('main > section').forEach(x => x.classList.add('hidden'));
+        document.getElementById(s + '-sec').classList.remove('hidden');
+        if(s === 'products') loadProducts();
+        if(s === 'orders') loadOrders();
+    }
+
+    document.getElementById('p-main').onchange = e => { const r = new FileReader(); r.onload = () => main64 = r.result; r.readAsDataURL(e.target.files[0]); };
+
+    async function saveProduct() {
+        const data = { name: document.getElementById('p-name').value, price: document.getElementById('p-price').value, cat: document.getElementById('p-cat').value, mainImg: main64 };
+        await fetch(DB + "products.json", { method: 'POST', body: JSON.stringify(data) });
+        alert('تم الحفظ!'); location.reload();
+    }
+
+    async function loadProducts() {
+        const res = await fetch(DB + "products.json");
+        const data = await res.json();
+        const list = document.getElementById('pro-list');
+        list.innerHTML = data ? Object.keys(data).map(k => `
+            <div class="bg-white p-4 rounded-2xl shadow-sm border text-center">
+                <img src="${data[k].mainImg}" class="h-32 w-full object-contain mb-2">
+                <b class="text-xs block h-8 overflow-hidden">${data[k].name}</b>
+                <p class="text-blue-600 font-bold">${data[k].price} ج.م</p>
+                <button onclick="del('products/${k}')" class="text-red-500 font-bold text-xs mt-3">حذف المنتج</button>
+            </div>`).join('') : "";
+    }
+
+    async function loadOrders() {
+        const res = await fetch(DB + "orders.json");
+        const data = await res.json();
+        document.getElementById('ord-list').innerHTML = data ? Object.keys(data).reverse().map(k => `
+            <div class="bg-white p-6 rounded-2xl shadow-md border-r-8 border-blue-600">
+                <div class="flex justify-between items-center mb-4">
+                    <b class="text-xl">${data[k].customer}</b>
+                    <span class="bg-blue-100 text-blue-600 px-4 py-1 rounded-full text-xs font-bold">${data[k].date}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                    <p><b>الهاتف:</b> ${data[k].phone}</p>
+                    <p><b>تفاصيل السكن:</b> ${data[k].details}</p>
+                    <p class="col-span-2"><b>العنوان:</b> ${data[k].address}</p>
+                    <p class="col-span-2 text-blue-600 font-black"><b>المنتجات:</b> ${data[k].items.map(i => i.n).join(' + ')}</p>
+                </div>
+                <div class="flex justify-between items-center border-t pt-4">
+                    <b class="text-2xl font-black">${data[k].total} ج.م</b>
+                    <button onclick="del('orders/${k}')" class="text-red-500 font-bold border border-red-200 px-4 py-2 rounded-xl">حذف الطلب</button>
+                </div>
+            </div>`).join('') : "";
+    }
+
+    async function del(path) { if(confirm('متأكد يا لؤي؟')) { await fetch(DB + path + ".json", { method: 'DELETE' }); location.reload(); } }
+</script>
+</body>
+</html>
