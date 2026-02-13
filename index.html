@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TECHSTORE | الإحترافية في التسوق</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        body { font-family: 'Cairo', sans-serif; background: #fff; overflow-x: hidden; }
+        .category-btn.active { background: #2563eb; color: white; border-color: #2563eb; }
+        .cart-sidebar { transform: translateX(100%); transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; }
+        .cart-sidebar.open { transform: translateX(0); }
+        .slider-img { display: none; width: 100%; height: 100%; object-fit: cover; }
+        .slider-img.active { display: block; animation: zoomIn 1s; }
+        #custom-alert { display: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+<div id="custom-alert" class="fixed top-10 left-1/2 -translate-x-1/2 z-[5000] animate__animated">
+    <div class="bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-b-4 border-blue-600">
+        <i class="fa fa-check-circle text-blue-400 text-xl"></i>
+        <span id="alert-msg" class="font-bold text-sm"></span>
+    </div>
+</div>
+
+<header class="bg-white/90 backdrop-blur-md sticky top-0 z-[500] border-b py-4 shadow-sm">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+            <div class="bg-blue-600 p-2 rounded-xl text-white shadow-lg"><i class="fa fa-bolt"></i></div>
+            <h1 class="text-2xl font-black italic tracking-tighter uppercase">TECH<span class="text-blue-600">STORE</span></h1>
+        </div>
+        <div onclick="toggleCart(true)" class="relative cursor-pointer group">
+            <i class="fa fa-shopping-bag text-2xl group-hover:text-blue-600 transition"></i>
+            <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold">0</span>
+        </div>
+    </div>
+</header>
+
+<section class="bg-white border-b py-4">
+    <div class="container mx-auto px-4">
+        <input id="search-bar" oninput="search()" placeholder="ابحث عن موبايل، ساعة، شاحن..." class="w-full max-w-2xl mx-auto block border-2 p-3 rounded-full px-8 outline-none focus:border-blue-500 mb-6 shadow-sm">
+        <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <button onclick="filter('الكل', this)" class="category-btn active px-6 py-2 rounded-full border font-bold text-sm whitespace-nowrap">الكل</button>
+            <button onclick="filter('موبايلات', this)" class="category-btn px-6 py-2 rounded-full border font-bold text-sm whitespace-nowrap">موبايلات</button>
+            <button onclick="filter('ساعات', this)" class="category-btn px-6 py-2 rounded-full border font-bold text-sm whitespace-nowrap">ساعات</button>
+            <button onclick="filter('شواحن', this)" class="category-btn px-6 py-2 rounded-full border font-bold text-sm whitespace-nowrap">شواحن</button>
+            <button onclick="filter('سماعات', this)" class="category-btn px-6 py-2 rounded-full border font-bold text-sm whitespace-nowrap">سماعات</button>
+            <button onclick="filter('أيباد', this)" class="category-btn px-6 py-2 rounded-full border font-bold text-sm whitespace-nowrap">أيباد</button>
+            <button onclick="filter('لابتوبات', this)" class="category-btn px-6 py-2 rounded-full border font-bold text-sm whitespace-nowrap">لابتوبات</button>
+            <button onclick="filter('شاشات', this)" class="category-btn px-6 py-2 rounded-full border font-bold text-sm whitespace-nowrap">شاشات</button>
+        </div>
+    </div>
+</section>
+
+<div id="main-slider" class="container mx-auto mt-6 px-4 h-[200px] md:h-[450px] relative rounded-[2.5rem] overflow-hidden shadow-2xl bg-gray-100"></div>
+
+<main class="container mx-auto px-4 py-16">
+    <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8"></div>
+</main>
+
+<div id="p-modal" class="fixed inset-0 z-[2000] hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-5xl rounded-[3rem] p-8 md:p-12 relative max-h-[90vh] overflow-y-auto">
+        <button onclick="closeP()" class="absolute top-6 right-6 text-4xl font-bold">&times;</button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div>
+                <img id="m-img" class="w-full h-80 object-contain bg-slate-50 rounded-3xl p-6 border mb-4">
+                <div id="g-list" class="flex gap-2 overflow-x-auto pb-2"></div>
+            </div>
+            <div class="text-right">
+                <h2 id="m-name" class="text-4xl font-black mb-4"></h2>
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="text-yellow-400 font-bold">★★★★★</span>
+                    <span class="text-gray-400 text-xs italic">(<span id="m-count">0</span> طلبوا المنتج ده)</span>
+                </div>
+                <div id="m-price" class="text-3xl font-black text-blue-600 mb-6"></div>
+                <p id="m-desc" class="text-gray-500 leading-relaxed mb-8 text-lg"></p>
+                <button id="add-final" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xl shadow-xl hover:bg-black transition-all">إضافة للسلة</button>
+                <div class="mt-12 border-t pt-8">
+                    <h3 class="font-bold text-xl mb-6">التقييمات ⭐</h3>
+                    <div id="m-comments" class="space-y-3 mb-6"></div>
+                    <div class="flex gap-2">
+                        <input id="u-comm" placeholder="اكتب رأيك..." class="flex-1 border-2 p-3 rounded-xl outline-none focus:border-blue-500">
+                        <button onclick="addComm()" class="bg-slate-900 text-white px-6 rounded-xl font-bold">إرسال</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="cart-overlay" class="fixed inset-0 bg-black/60 z-[900] hidden" onclick="toggleCart(false)"></div>
+<div id="cart-sidebar" class="cart-sidebar fixed top-0 right-0 w-full max-w-md h-full bg-white p-8 flex flex-col">
+    <h2 class="text-3xl font-black mb-8 border-b-4 border-blue-600 pb-4">حقيبة التسوق</h2>
+    <div id="cart-items" class="flex-1 overflow-y-auto space-y-4"></div>
+    <div class="border-t pt-6 space-y-4">
+        <div class="flex justify-between text-2xl font-black"><span>الإجمالي:</span> <span id="cart-total" class="text-blue-600">0</span> ج.م</div>
+        <div class="bg-gray-50 p-6 rounded-[2rem] space-y-3 shadow-inner">
+            <input id="o-name" placeholder="الاسم بالكامل" class="w-full p-3 rounded-xl border-none shadow-sm">
+            <input id="o-phone" placeholder="رقم الموبايل" class="w-full p-3 rounded-xl border-none shadow-sm">
+            <div class="grid grid-cols-3 gap-2">
+                <input id="o-h" placeholder="منزل" class="p-3 rounded-xl border-none shadow-sm text-center">
+                <input id="o-f" placeholder="دور" class="p-3 rounded-xl border-none shadow-sm text-center">
+                <input id="o-s" placeholder="شقة" class="p-3 rounded-xl border-none shadow-sm text-center">
+            </div>
+            <textarea id="o-addr" placeholder="العنوان بالتفصيل" class="w-full p-3 rounded-xl border-none shadow-sm h-16"></textarea>
+        </div>
+        <button onclick="sendOrder()" class="w-full bg-green-600 text-white py-5 rounded-[2rem] font-black text-xl">تأكيد الأوردر (واتساب)</button>
+    </div>
+</div>
+
+<div id="chat-btn" onclick="toggleChat(true)" class="fixed bottom-6 left-6 z-[2000] bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-2xl cursor-pointer hover:scale-110 transition-all">
+    <i class="fa fa-comments text-2xl"></i>
+</div>
+
+<div id="chat-window" class="fixed bottom-24 left-6 w-[350px] h-[450px] bg-white rounded-[2rem] shadow-2xl z-[2000] hidden flex-col overflow-hidden border">
+    <div class="bg-blue-600 p-4 text-white flex justify-between items-center">
+        <span class="font-bold italic">دعم TECHSTORE</span>
+        <button onclick="toggleChat(false)" class="text-2xl">&times;</button>
+    </div>
+    <div id="chat-content" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 flex flex-col"></div>
+    <div class="p-3 border-t flex gap-2">
+        <input id="chat-input" placeholder="اكتب رسالتك..." class="flex-1 border-none bg-gray-100 p-2 rounded-xl text-sm outline-none">
+        <button onclick="sendChat()" class="bg-blue-600 text-white px-4 rounded-xl"><i class="fa fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<footer class="bg-slate-950 text-white py-12 text-center mt-20">
+    <p class="font-black text-sm">جميع الحقوق محفوظة &copy; 2026 TECHSTORE - لؤي</p>
+</footer>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init();
+    const DB = "https://store-c8993-default-rtdb.firebaseio.com/";
+    const chatId = localStorage.getItem('chatId') || 'chat_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('chatId', chatId);
+    let products = {}, cart = [], currentID = "";
+
+    function showAlert(msg) {
+        const box = document.getElementById('custom-alert');
+        document.getElementById('alert-msg').innerText = msg;
+        box.style.display = 'block';
+        box.className = 'fixed top-10 left-1/2 -translate-x-1/2 z-[5000] animate__animated animate__fadeInDown';
+        setTimeout(() => {
+            box.className = 'fixed top-10 left-1/2 -translate-x-1/2 z-[5000] animate__animated animate__fadeOutUp';
+            setTimeout(() => { box.style.display = 'none'; }, 500);
+        }, 3000);
+    }
+
+    async function init() {
+        const sRes = await fetch(DB + "ads.json");
+        const sData = await sRes.json();
+        if(sData) {
+            const cont = document.getElementById('main-slider');
+            cont.innerHTML = Object.values(sData).map((img, i) => `<img src="${img}" class="slider-img animate__animated animate__fadeIn ${i===0?'active':''}">`).join('');
+            let idx = 0; const imgs = document.querySelectorAll('.slider-img');
+            if(imgs.length > 1) setInterval(() => { imgs[idx].classList.remove('active'); idx = (idx + 1) % imgs.length; imgs[idx].classList.add('active'); }, 5000);
+        }
+        const pRes = await fetch(DB + "products.json");
+        products = await pRes.json() || {};
+        render(products);
+    }
+
+    function render(data) {
+        document.getElementById('product-grid').innerHTML = Object.keys(data).map(k => `
+            <div class="bg-white p-5 rounded-[2.5rem] shadow-sm border hover:shadow-2xl transition-all text-center group" data-aos="fade-up">
+                <div onclick="showDet('${k}')" class="cursor-pointer"><img src="${data[k].mainImg}" class="h-44 w-full object-contain mb-4 group-hover:scale-110 transition"><h4 class="font-bold text-sm h-10 overflow-hidden text-gray-700">${data[k].name}</h4><div class="text-blue-600 font-black text-xl mt-4">${data[k].price} ج.م</div></div>
+                <button onclick="addToCart('${k}')" class="w-full bg-slate-100 hover:bg-blue-600 hover:text-white py-3 rounded-2xl mt-5 font-bold transition-all">إضافة للسلة</button>
+            </div>`).join('');
+    }
+
+    function showDet(id) {
+        currentID = id; const p = products[id];
+        document.getElementById('m-name').innerText = p.name;
+        document.getElementById('m-price').innerText = p.price + " ج.م";
+        document.getElementById('m-desc').innerText = p.desc || "";
+        document.getElementById('m-img').src = p.mainImg;
+        document.getElementById('m-count').innerText = p.orderCount || 0;
+        document.getElementById('add-final').onclick = () => addToCart(id);
+        const gal = document.getElementById('g-list');
+        gal.innerHTML = `<img src="${p.mainImg}" onclick="document.getElementById('m-img').src=this.src" class="w-20 h-20 border-2 rounded-xl cursor-pointer p-1">`;
+        if(p.gallery) p.gallery.forEach(img => { gal.innerHTML += `<img src="${img}" onclick="document.getElementById('m-img').src=this.src" class="w-20 h-20 border-2 rounded-xl cursor-pointer p-1">`; });
+        loadComm(id);
+        document.getElementById('p-modal').style.display = 'flex';
+    }
+
+    function addToCart(id) { cart.push(products[id]); updateUI(); showAlert('تمت إضافة ' + products[id].name + ' للسلة! ✅'); }
+    function toggleCart(s) { document.getElementById('cart-sidebar').classList.toggle('open', s); document.getElementById('cart-overlay').classList.toggle('hidden', !s); }
+
+    function updateUI() {
+        document.getElementById('cart-count').innerText = cart.length;
+        let total = 0;
+        document.getElementById('cart-items').innerHTML = cart.map((item, i) => {
+            total += parseInt(item.price);
+            return `<div class="flex gap-4 items-center bg-gray-50 p-3 rounded-2xl border"><img src="${item.mainImg}" class="w-14 h-14 object-cover rounded-xl shadow-sm"><div class="flex-1 font-bold text-xs">${item.name}<br><span class="text-blue-600">${item.price} ج.م</span></div><button onclick="cart.splice(${i},1);updateUI()" class="text-red-500 font-bold text-xl">&times;</button></div>`;
+        }).join('');
+        document.getElementById('cart-total').innerText = total;
+    }
+
+    async function sendOrder() {
+        if(cart.length === 0) return showAlert('السلة فاضية!');
+        const name = document.getElementById('o-name').value;
+        const phone = document.getElementById('o-phone').value;
+        const addr = `${document.getElementById('o-addr').value} (منزل:${document.getElementById('o-h').value}, دور:${document.getElementById('o-f').value}, شقة:${document.getElementById('o-s').value})`;
+        const msg = `طلب جديد لؤي 🚀%0Aالاسم: ${name}%0Aالهاتف: ${phone}%0Aالعنوان: ${addr}%0Aالمنتجات: ${cart.map(i=>i.name).join(' + ')}%0Aالإجمالي: ${document.getElementById('cart-total').innerText} ج.م`;
+        await fetch(DB + "orders.json", { method: 'POST', body: JSON.stringify({ name, phone, addr, total: document.getElementById('cart-total').innerText, date: new Date().toLocaleString() }) });
+        window.open(`https://wa.me/201121189810?text=${msg}`);
+        location.reload();
+    }
+
+    function toggleChat(s) { document.getElementById('chat-window').style.display = s ? 'flex' : 'none'; if(s) listenChat(); }
+    async function sendChat() {
+        const input = document.getElementById('chat-input');
+        if(!input.value.trim()) return;
+        await fetch(`${DB}chats/${chatId}/messages.json`, { method: 'POST', body: JSON.stringify({ text: input.value, sender: 'user', time: new Date().toLocaleTimeString() }) });
+        input.value = ''; listenChat();
+    }
+    function listenChat() {
+        fetch(`${DB}chats/${chatId}/messages.json`).then(r => r.json()).then(data => {
+            const cont = document.getElementById('chat-content');
+            cont.innerHTML = data ? Object.values(data).map(m => `<div class="${m.sender==='user'?'self-start bg-blue-100':'self-end bg-slate-800 text-white'} p-3 rounded-2xl max-w-[80%] text-xs font-bold shadow-sm animate__animated animate__fadeIn">${m.text}</div>`).join('') : '';
+            cont.scrollTop = cont.scrollHeight;
+        });
+    }
+
+    async function addComm() {
+        const t = document.getElementById('u-comm').value; if(!t) return;
+        await fetch(DB + `products/${currentID}/comments.json`, { method: 'POST', body: JSON.stringify(t) });
+        document.getElementById('u-comm').value = ""; loadComm(currentID); showAlert('شكراً لتقييمك! ⭐');
+    }
+    async function loadComm(id) {
+        const res = await fetch(DB + `products/${id}/comments.json`); const data = await res.json();
+        document.getElementById('m-comments').innerHTML = data ? Object.values(data).map(c => `<div class="bg-blue-50 p-3 rounded-2xl text-sm font-bold border-r-4 border-blue-600">${c}</div>`).join('') : "لا يوجد تعليقات.";
+    }
+    function filter(c, b) {
+        document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active')); b.classList.add('active');
+        if(c==='الكل') render(products); else render(Object.keys(products).filter(k=>products[k].cat===c).reduce((r,k)=>(r[k]=products[k],r), {}));
+    }
+    function closeP() { document.getElementById('p-modal').style.display = 'none'; }
+    function search() { const t = document.getElementById('search-bar').value.toLowerCase(); render(Object.keys(products).filter(k=>products[k].name.toLowerCase().includes(t)).reduce((r,k)=>(r[k]=products[k],r), {})); }
+    init();
+</script>
+</body>
+</html>
