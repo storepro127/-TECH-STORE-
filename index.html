@@ -1,0 +1,72 @@
+<div id="chat-btn" onclick="toggleChatWindow(true)" class="fixed bottom-6 left-6 z-[2000] bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-2xl cursor-pointer hover:scale-110 transition-all animate__animated animate__bounceIn">
+    <i class="fa fa-comments text-2xl"></i>
+</div>
+
+<div id="chat-window" class="fixed bottom-24 left-6 w-[350px] h-[450px] bg-white rounded-[2rem] shadow-2xl z-[2000] hidden flex-col overflow-hidden border animate__animated animate__fadeInUp">
+    <div class="bg-blue-600 p-4 text-white flex justify-between items-center">
+        <span class="font-black italic">دعم TECHSTORE</span>
+        <button onclick="toggleChatWindow(false)" class="text-2xl">&times;</button>
+    </div>
+    <div id="chat-content" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 flex flex-col">
+        <p class="text-[10px] text-center text-gray-400">أهلاً بك! اكتب استفسارك وهنرد عليك في أسرع وقت.</p>
+    </div>
+    <div class="p-3 border-t flex gap-2 bg-white">
+        <input id="chat-input" placeholder="اكتب رسالتك..." class="flex-1 border-none bg-gray-100 p-2 rounded-xl text-sm outline-none">
+        <button onclick="sendChatMessage()" class="bg-blue-600 text-white px-4 rounded-xl"><i class="fa fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<script>
+    // نظام الشات الخاص بالعميل
+    const chatId = localStorage.getItem('userChatId') || 'chat_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('userChatId', chatId);
+
+    function toggleChatWindow(show) {
+        document.getElementById('chat-window').style.display = show ? 'flex' : 'none';
+        if(show) listenForReplies();
+    }
+
+    async function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        if(!input.value.trim()) return;
+
+        const msg = {
+            text: input.value,
+            sender: 'user',
+            time: new Date().toLocaleTimeString(),
+            timestamp: Date.now()
+        };
+
+        await fetch(`${DB}chats/${chatId}/messages.json`, { 
+            method: 'POST', 
+            body: JSON.stringify(msg) 
+        });
+        
+        input.value = '';
+        listenForReplies();
+    }
+
+    function listenForReplies() {
+        // بنستخدم التحديث اللحظي البسيط هنا
+        fetch(`${DB}chats/${chatId}/messages.json`).then(r => r.json()).then(data => {
+            const cont = document.getElementById('chat-content');
+            cont.innerHTML = '';
+            if(data) {
+                Object.values(data).forEach(m => {
+                    const isUser = m.sender === 'user';
+                    cont.innerHTML += `
+                        <div class="${isUser ? 'self-start bg-blue-100' : 'self-end bg-slate-800 text-white'} p-3 rounded-2xl max-w-[80%] text-xs font-bold shadow-sm animate__animated animate__fadeIn">
+                            ${m.text}
+                            <div class="text-[8px] mt-1 opacity-50">${m.time}</div>
+                        </div>`;
+                });
+                cont.scrollTop = cont.scrollHeight;
+            }
+        });
+    }
+
+    // تشغيل المستمع كل 5 ثواني لو الشات مفتوح
+    setInterval(() => {
+        if(document.getElementById('chat-window').style.display === 'flex') listenForReplies();
+    }, 5000);
+</script>
