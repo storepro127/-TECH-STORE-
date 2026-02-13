@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | TECHSTORE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap'); body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-slate-50">
+
+<div id="custom-alert" class="fixed top-10 left-1/2 -translate-x-1/2 z-[5000] hidden">
+    <div class="bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-b-4 border-blue-600">
+        <i class="fa fa-info-circle text-blue-400 text-xl"></i>
+        <span id="alert-msg" class="font-bold text-sm"></span>
+    </div>
+</div>
+
+<div id="login-box" class="max-w-md mx-auto mt-24 p-12 bg-white rounded-[3rem] shadow-2xl text-center">
+    <h2 class="text-2xl font-black mb-8 italic text-blue-600">Admin Login</h2>
+    <input id="u" placeholder="اسم المستخدم" class="w-full bg-gray-50 border-none p-4 rounded-2xl mb-4 outline-none focus:ring-2 ring-blue-600">
+    <input type="password" id="p" placeholder="كلمة السر" class="w-full bg-gray-50 border-none p-4 rounded-2xl mb-8 outline-none focus:ring-2 ring-blue-600">
+    <button onclick="login()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-xl shadow-lg">دخول</button>
+</div>
+
+<div id="ui" class="hidden">
+    <nav class="bg-slate-900 text-white p-5 sticky top-0 z-50 flex gap-4 overflow-x-auto scrollbar-hide">
+        <button onclick="sec('add')" class="bg-blue-600 px-6 py-2 rounded-xl font-bold">إضافة منتج</button>
+        <button onclick="sec('orders')" class="bg-green-600 px-6 py-2 rounded-xl font-bold">الطلبات</button>
+        <button onclick="sec('support')" class="bg-blue-400 px-6 py-2 rounded-xl font-bold">خدمة العملاء</button>
+        <button onclick="sec('admins')" class="bg-orange-500 px-6 py-2 rounded-xl font-bold">إضافة أدمن</button>
+        <button onclick="logout()" class="bg-red-500 px-6 py-2 rounded-xl font-bold">خروج</button>
+    </nav>
+    <main class="container mx-auto p-6 space-y-12">
+        <section id="add-sec" class="hidden max-w-2xl mx-auto bg-white p-10 rounded-[2.5rem] shadow-xl">
+            <h3 class="text-2xl font-black mb-8 border-b pb-4">نشر منتج جديد</h3>
+            <div class="space-y-4">
+                <input id="pn" placeholder="اسم المنتج" class="w-full border p-4 rounded-2xl bg-gray-50">
+                <select id="pc" class="w-full border p-4 rounded-2xl bg-gray-50 font-bold"><option>موبايلات</option><option>ساعات</option><option>شواحن</option><option>سماعات</option><option>أيباد</option><option>لابتوبات</option><option>شاشات</option><option>إكسسوارات</option></select>
+                <input id="pp" type="number" placeholder="السعر" class="w-full border p-4 rounded-2xl bg-gray-50"><textarea id="pd" placeholder="الوصف" class="w-full border p-4 rounded-2xl bg-gray-50 h-24"></textarea>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="border-2 border-dashed p-4 rounded-2xl text-center"><p class="text-xs font-bold mb-2">الأساسية:</p><input type="file" id="p-m" class="text-[10px]"></div>
+                    <div class="border-2 border-dashed p-4 rounded-2xl text-center"><p class="text-xs font-bold mb-2">باقي الصور (7):</p><input type="file" id="p-g" multiple class="text-[10px]"></div>
+                </div>
+                <button onclick="save()" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black shadow-lg">حفظ ونشر</button>
+            </div>
+        </section>
+
+        <section id="support-sec" class="hidden h-[600px] flex gap-4">
+            <div class="w-1/3 bg-white rounded-3xl p-4 shadow-xl overflow-y-auto"><h3 class="font-black mb-4 border-b">المحادثات</h3><div id="chat-users" class="space-y-2"></div></div>
+            <div class="flex-1 bg-white rounded-3xl shadow-xl flex flex-col overflow-hidden">
+                <div id="cur-chat-name" class="bg-slate-900 text-white p-4 font-bold italic text-sm text-center tracking-tighter uppercase">اختر محادثة</div>
+                <div id="admin-chat-cont" class="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col space-y-3"></div>
+                <div class="p-4 border-t flex gap-2"><input id="admin-chat-in" placeholder="اكتب ردك يا لؤي..." class="flex-1 border p-3 rounded-xl outline-none"><button onclick="sendAdminReply()" class="bg-blue-600 text-white px-8 rounded-xl font-bold shadow-lg">رد</button></div>
+            </div>
+        </section>
+
+        <section id="orders-sec" class="hidden space-y-4"></section>
+        <section id="admins-sec" class="hidden max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl text-center">
+            <h3 class="font-black mb-6">مدير جديد</h3>
+            <input id="au" placeholder="الاسم" class="w-full border p-3 rounded-xl mb-3"><input id="ap" placeholder="الباسورد" class="w-full border p-3 rounded-xl mb-4">
+            <button onclick="addAd()" class="w-full bg-orange-500 text-white py-3 rounded-xl font-bold">حفظ</button>
+        </section>
+    </main>
+</div>
+
+<script>
+    const DB = "https://store-c8993-default-rtdb.firebaseio.com/";
+    let m64 = "", g64 = [], activeChatId = null;
+
+    function showAlert(msg) {
+        const box = document.getElementById('custom-alert');
+        document.getElementById('alert-msg').innerText = msg;
+        box.style.display = 'block';
+        setTimeout(() => { box.style.display = 'none'; }, 3000);
+    }
+
+    window.onload = () => { if(localStorage.getItem('auth')) show(); };
+
+    async function login() {
+        const u = document.getElementById('u').value, p = document.getElementById('p').value;
+        const res = await fetch(DB + "admins.json"); const ads = await res.json() || {};
+        let ok = (u === "loay" && p === "11211");
+        Object.values(ads).forEach(a => { if(a.u === u && a.p === p) ok = true; });
+        if(ok) { localStorage.setItem('auth', 'true'); show(); } else showAlert('البيانات غلط! ❌');
+    }
+
+    function show() { document.getElementById('login-box').style.display = 'none'; document.getElementById('ui').classList.remove('hidden'); sec('add'); }
+    function logout() { localStorage.removeItem('auth'); location.reload(); }
+    function sec(s) { document.querySelectorAll('main > section').forEach(x => x.classList.add('hidden')); document.getElementById(s + '-sec').classList.remove('hidden'); if(s==='orders') lo(); if(s==='support') loadChats(); }
+
+    document.getElementById('p-m').onchange = e => { const r = new FileReader(); r.onload = () => m64 = r.result; r.readAsDataURL(e.target.files[0]); };
+    document.getElementById('p-g').onchange = e => { g64 = []; Array.from(e.target.files).slice(0,7).forEach(f => { const r = new FileReader(); r.onload = () => g64.push(r.result); r.readAsDataURL(f); }); };
+
+    async function save() {
+        const d = { name: document.getElementById('pn').value, cat: document.getElementById('pc').value, price: document.getElementById('pp').value, desc: document.getElementById('pd').value, mainImg: m64, gallery: g64, orderCount: 0 };
+        await fetch(DB + "products.json", { method: 'POST', body: JSON.stringify(d) });
+        showAlert('تم نشر المنتج! 🚀');
+    }
+
+    async function lo() {
+        const res = await fetch(DB + "orders.json"); const data = await res.json() || {};
+        document.getElementById('orders-sec').innerHTML = Object.keys(data).reverse().map(k => `
+            <div class="bg-white p-6 rounded-3xl border-r-8 border-blue-600 shadow-md flex justify-between items-center"><div><b>${data[k].name}</b> - ${data[k].total} ج.م<br><small>${data[k].address}</small></div><button onclick="del('orders/${k}')" class="text-red-500 font-bold">مسح</button></div>`).join('');
+    }
+
+    async function loadChats() {
+        const res = await fetch(`${DB}chats.json`); const chats = await res.json();
+        const list = document.getElementById('chat-users'); list.innerHTML = '';
+        if(chats) Object.keys(chats).forEach(id => { list.innerHTML += `<div onclick="openChat('${id}')" class="p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-blue-50 border transition-all text-xs font-bold uppercase tracking-widest">عميل: ${id.substr(-4)}</div>`; });
+    }
+    async function openChat(id) {
+        activeChatId = id; document.getElementById('cur-chat-name').innerText = "الرد على: " + id.substr(-4);
+        const res = await fetch(`${DB}chats/${id}/messages.json`); const messages = await res.json();
+        const cont = document.getElementById('admin-chat-cont'); cont.innerHTML = messages ? Object.values(messages).map(m => `<div class="${m.sender==='admin'?'self-end bg-slate-800 text-white':'self-start bg-blue-100'} p-3 rounded-2xl max-w-[80%] text-xs font-bold shadow-sm">${m.text}</div>`).join('') : '';
+        cont.scrollTop = cont.scrollHeight;
+    }
+    async function sendAdminReply() {
+        if(!activeChatId) return showAlert('اختر محادثة! ⚠️');
+        const input = document.getElementById('admin-chat-in'); if(!input.value.trim()) return;
+        await fetch(`${DB}chats/${activeChatId}/messages.json`, { method: 'POST', body: JSON.stringify({ text: input.value, sender: 'admin', time: new Date().toLocaleTimeString() }) });
+        input.value = ''; openChat(activeChatId);
+    }
+
+    async function addAd() {
+        const u = document.getElementById('au').value, p = document.getElementById('ap').value;
+        await fetch(DB + "admins.json", { method: 'POST', body: JSON.stringify({u, p}) }); showAlert('تم إضافة الأدمن! 👤');
+    }
+    async function del(p) { if(confirm('؟')) { await fetch(DB + p + ".json", { method: 'DELETE' }); lo(); } }
+</script>
+</body>
+</html>
